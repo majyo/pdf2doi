@@ -1,6 +1,6 @@
 import argparse
 import logging
-from os import path, listdir
+from os import path, listdir, PathLike
 import pdf2doi.finders as finders
 import pdf2doi.config as config
 import io
@@ -9,7 +9,7 @@ import io
 # import easygui Modules that are commented here are imported later only when needed, to improve start up time
 # import pyperclip
 
-def pdf2doi(target):
+def pdf2doi(target: str | PathLike) -> dict | list | None:
     ''' This is the main routine of the library. When the library is used as a command-line tool (via the entry-point "pdf2doi") the input arguments
     are collected, validated and sent to this function (see the function main() below).
     The function tries to extract the DOI (or other identifiers) of the publication in the pdf files whose path is specified in the input variable target.
@@ -102,7 +102,7 @@ def pdf2doi(target):
         return result  # This will be a dictionary with all entries as None
 
 
-def pdf2doi_singlefile(file):
+def pdf2doi_singlefile(file: str) -> dict | None:
     """
     Try to find an identifier of the file specified by the input argument file.  This function does not check wheter filename is a valid path to a pdf file.
 
@@ -143,7 +143,7 @@ def pdf2doi_singlefile(file):
     return result
 
 
-def __find_doi(file: io.IOBase) -> dict:
+def __find_doi(file: io.IOBase | str) -> dict:
     logger = logging.getLogger("pdf2doi")
 
     # Several methods are now applied to find a valid identifier in the .pdf file identified by filename

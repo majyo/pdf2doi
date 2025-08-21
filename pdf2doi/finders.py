@@ -5,6 +5,7 @@ The module is divided in two parts. The first part contains low-level functions.
 any part of the main script main.py. Instead, they are called by the high-level finder functions, defined in the second part of 
 this module.
 """
+from collections.abc import Callable
 from urllib.parse import unquote
 from itertools import accumulate
 from pypdf import PdfWriter
@@ -29,6 +30,7 @@ from pdf2doi.patterns import (
     standardise_doi#,
     #isbn_regexp
 )
+from pdf2doi.utils_pdf import cutoff_ref_pages_for_pdfminer, cutoff_ref_pages_for_pypdf
 
 logger = logging.getLogger('pdf2doi')
 
@@ -442,7 +444,7 @@ def find_possible_titles(file):
     [titles.append(x) for x in titles_temp if x not in titles]
     return titles
         
-def get_pdf_text(file,reader):
+def get_pdf_text(file,reader, try_cutoff_ref_pages: bool = True):
     """
     Given a valid file object (pointing to a pdf file), it returns the text of the pdf file extracted with the library 
     specified in the 'reader' input variable.
@@ -455,6 +457,10 @@ def get_pdf_text(file,reader):
         The currently supported values are either 
             'pypdf' (uses the PyPDF2 module)
             'textract' (uses the 'textract' module)
+    try_cutoff_ref_pages : boolean, optional
+        If True (default), it tries to cut off the reference pages at the end of the pdf file, by using the function
+        cutoff_ref_pages_for_pdfminer or cutoff_ref_pages_for_pypdf, depending on the value of 'reader'.
+        If False, it extracts all the pages of the pdf file.
     Returns
     -------
     text : list of strings
@@ -463,7 +469,14 @@ def get_pdf_text(file,reader):
 
     if reader == 'pdfminer':
         try:
-            pdf_text = extract_text(file)
+            if try_cutoff_ref_pages:
+                cutoff_page_count = cutoff_ref_pages_for_pdfminer(file)
+                if cutoff_page_count > 0:
+                    pdf_text = extract_text(file, maxpages=cutoff_page_count)
+                else:
+                    pdf_text = extract_text(file)
+            else:
+                pdf_text = extract_text(file)
         except Exception as e:
             logger.error(f"An error occurred when reading the content of this file with pdfminer.")
             logger.error("Error from pdfminer: " + str(e))
@@ -480,6 +493,10 @@ def get_pdf_text(file,reader):
             return None
         try:
             number_of_pages = pdf.getNumPages()
+            if try_cutoff_ref_pages:
+                cutoff_page_count = cutoff_ref_pages_for_pypdf(file)
+                if number_of_pages > cutoff_page_count > 0:
+                    number_of_pages = cutoff_page_count
         except Exception as e:
             logger.error(f"An error occurred when retrieving the number of pages in the pdf with PyPDF2.")
             logger.error("Error from PyPDF2: " + str(e))
@@ -685,9 +702,13 @@ def find_identifier(file, method, func_validate=validate,**kwargs):
             
     ######     
             
-    result = {'identifier':identifier,'identifier_type':desc,
-              'path':file.name, 'method':method}
-    result['validation_info'] = info
+    result = {
+        'identifier': identifier,
+        'identifier_type': desc,
+        'path': file.name,
+        'method': method,
+        'validation_info': info
+    }
 
     return result
 
