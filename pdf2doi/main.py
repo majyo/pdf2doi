@@ -153,7 +153,8 @@ def __find_doi(file: io.IOBase | str) -> dict:
     # valid identifier inside it. We first look for the elements of the dictionary with keys '/doi' or /pdf2doi_identifier'(if the they exist),
     # and then any other field of the dictionary
     logger.info(f"Method #1: Looking for a valid identifier in the document infos...")
-    result = finders.find_identifier(file, method="document_infos", keysToCheckFirst=['/doi', '/pdf2doi_identifier'])
+    # result = finders.find_identifier(file, method="document_infos", keysToCheckFirst=['/doi', '/pdf2doi_identifier'])
+    result = finders.find_identifier(file, method="document_infos", keysToCheckFirst=['/doi'])
     if result['identifier']:
         return result
 

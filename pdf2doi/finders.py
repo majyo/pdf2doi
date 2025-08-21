@@ -733,7 +733,7 @@ def find_identifier_in_pdf_info(file,func_validate,keysToCheckFirst=[]):
     #This is a list of keys that will NOT be considered when looking for an identifier in the metadata. 
     #Some of them are known to contain doi-like patterns but not the actual doi of the publication.
     #For example '/wps-journaldoi' contains the DOI of the journal
-    KeysNotToUse = ['/wps-journaldoi'] 
+    KeysNotToUse = ['/wps-journaldoi', '/pdf2doi_identifier']
     pdfinfo = get_pdf_info(file)
     identifier, desc, info = None, None, None
     if pdfinfo:
