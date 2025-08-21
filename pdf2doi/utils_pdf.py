@@ -36,10 +36,13 @@ def cutoff_ref_pages_for_pdfminer(pdf_file: str, ref_judging_func: Callable[[str
         interpreter = PDFPageInterpreter(rsrcmgr, device)
         pages = PDFPage.get_pages(fp)
 
+        offset = 0
         for i, page in enumerate(pages):
             interpreter.process_page(page)
-            output_string.flush()
-            page_content = output_string.read()
+            page_content = output_string.getvalue()
+            new_offset = len(page_content)
+            page_content = page_content[min(offset, len(page_content) - 1):]
+            offset = new_offset
             if not page_content.strip():
                 continue
             if ref_judging_func and ref_judging_func(page_content):
